@@ -1,3 +1,6 @@
+# Your team credentials — never commit this.
+.env
+
 # Your produced artefact — don't commit it.
 data/*.parquet
 

@@ -88,10 +88,21 @@ learning today.
 
 ## The submission endpoint
 
-Once your local tests pass, send the two parquets to the validator:
+First, set up your credentials (one-time):
 
 ```bash
-curl -X POST https://bw.stl.dev/exercise-1/submit \
+cp .env.example .env
+# edit .env — paste BW_TEAM_TOKEN from the card you were handed
+```
+
+Once your local tests pass, send the two parquets to the validator
+(loading credentials from `.env` via your tool of choice — `set -a; source .env; set +a`,
+`uv run --env-file=.env`, `direnv`, or just `python-dotenv` inside a
+script):
+
+```bash
+set -a; source .env; set +a
+curl -X POST "$BW_ENDPOINT_URL/exercise-1/submit" \
   -H "Authorization: Bearer $BW_TEAM_TOKEN" \
   -F "forecast=@data/ecmwf_forecast.parquet" \
   -F "features=@data/ecmwf_features.parquet"
@@ -131,6 +142,7 @@ submission's pass/fail.
 .
 ├── README.md             ← this file
 ├── pyproject.toml        ← uv-managed; ships with polars + pytest only
+├── .env.example          ← copy to .env and paste your BW_TEAM_TOKEN
 ├── tests/                ← empty — you write the tests
 │   └── .gitkeep
 ├── data/                 ← empty; you write the parquets here
