@@ -7,47 +7,53 @@ coordinate conventions (0–360° longitude, latitude descending, units
 in Kelvin), and was never designed to be ergonomic.
 
 Your agent has to pull the data, decode it, and shape it into two
-clean parquets:
+clean **zarr** stores:
 
-- a **raw** spatial-mean series (one row per forecast step), and
+- a **raw** spatial-mean series (one entry per forecast step), and
 - a **model-ready** version (hourly, z-score normalised, ready to drop
   into a model's feature table).
 
-When both files pass the remote validator, you're done. The validator
-runs 27 checks against the contract below and returns per-check
+When both stores pass the remote validator, you're done. The validator
+runs 32 checks against the contract below and returns per-check
 pass/fail — that's the binding sign-off.
 
 ## What you produce
 
-Two parquets, both under `data/`:
+Two zarr stores, both under `data/`. Each is an xarray Dataset with
+`valid_time` as the coord/dim and named data_vars along it.
 
-### 1. `data/ecmwf_forecast.parquet` — the **raw** spatial-mean series
+### 1. `data/ecmwf_forecast.zarr/` — the **raw** spatial-mean series
 
-| column | dtype | meaning |
-|---|---|---|
-| `valid_time` | `Utf8` (string) | ISO-8601 UTC, e.g. `"2025-03-01T03:00:00+00:00"` |
-| `t2m_ecmwf_c` | `Float64` | 2-metre air temperature, **Celsius**, Belgian spatial mean |
-| `wind10m_ecmwf_ms` | `Float64` | 10-metre wind speed `sqrt(u² + v²)`, **m/s**, Belgian spatial mean |
+| element | spec |
+|---|---|
+| dim / coord | `valid_time`, dtype `datetime64[ns]`, length **56** |
+| data var | `t2m_ecmwf_c`  — 2-metre air temperature, **Celsius**, Belgian spatial mean, dtype `float64` |
+| data var | `wind10m_ecmwf_ms`  — 10-metre wind speed `sqrt(u² + v²)`, **m/s**, Belgian spatial mean, dtype `float64` |
 
-- **56 rows** (7 days × 8 three-hourly steps)
-- Sorted ascending by `valid_time`
-- No nulls
+- 56 entries (7 days × 8 three-hourly steps)
+- `valid_time` strictly ascending, no NaNs in either variable
 - Belgian bbox for the spatial mean: lat `49.5..51.5`, lon `2.5..6.5`
 
-### 2. `data/ecmwf_features.parquet` — the **model-ready** features
+```python
+import xarray as xr
+ds = xr.open_zarr("data/ecmwf_forecast.zarr")
+# ds.sel(valid_time="2025-03-01T03:00:00")["t2m_ecmwf_c"].item()
+```
 
-| column | dtype | meaning |
-|---|---|---|
-| `valid_time` | `Utf8` (string) | ISO-8601 UTC, hourly |
-| `t2m_ecmwf_z` | `Float64` | z-score normalised temperature |
-| `wind10m_ecmwf_z` | `Float64` | z-score normalised wind speed |
+### 2. `data/ecmwf_features.zarr/` — the **model-ready** features
 
-- **166 rows** — derived from the raw parquet by:
+| element | spec |
+|---|---|
+| dim / coord | `valid_time`, dtype `datetime64[ns]`, length **166** |
+| data var | `t2m_ecmwf_z`     — z-score normalised temperature, dtype `float64` |
+| data var | `wind10m_ecmwf_z` — z-score normalised wind speed, dtype `float64` |
+
+- 166 entries — derived from the raw store by:
   1. Resampling from 3-hourly to **hourly** by linear interpolation
      (`2025-03-01T00:00 .. 2025-03-07T21:00` inclusive)
-  2. Z-score normalising each numeric column: `(x − mean) / std`
-- Per-column `mean ≈ 0` and `std ≈ 1`
-- Sorted ascending, no nulls, exactly hourly cadence
+  2. Z-score normalising each variable: `(x − mean) / std`
+- Per-variable `mean ≈ 0` and `std ≈ 1`
+- `valid_time` strictly ascending, exactly hourly cadence, no NaNs
 
 ## Where the data lives
 
@@ -69,8 +75,8 @@ per `(init_date, forecast_step)`:
 - Each file contains exactly **three surface messages**: `2t` (2-metre
   temperature, Kelvin), `10u` and `10v` (10-metre wind components, m/s)
 
-`valid_time = init_time + step_hours`. So the row for `20250301-00z-03h.grib2`
-has `valid_time = 2025-03-01T03:00:00+00:00`.
+`valid_time = init_time + step_hours`. So the entry corresponding to
+`20250301-00z-03h.grib2` has `valid_time = 2025-03-01T03:00:00`.
 
 ## How to know you're done
 
@@ -81,27 +87,29 @@ translate it into pytest cases under `tests/` and drive them red →
 green as you build out the producer code. Useful test names to seed
 your thinking:
 
-- `test_raw_schema_matches_contract`
-- `test_raw_has_56_rows`
+- `test_raw_has_56_timesteps`
+- `test_raw_data_vars_match_contract`
 - `test_raw_t2m_plausible_for_belgian_march`
 - `test_features_hourly_cadence`
-- `test_features_mean_is_zero_and_std_is_one`
+- `test_features_each_var_has_zero_mean_and_unit_std`
 
 We deliberately don't ship a validator — inferring a contract, writing
 tests for it, then implementing against those tests is the discipline
 we want you to practise.
 
-**Remote:** once your local tests pass, submit both files to the
-endpoint for the binding pass/fail:
+**Remote:** once your local tests pass, **tar both stores into one
+archive** and submit it for the binding pass/fail:
 
 ```bash
 cp .env.example .env       # paste BW_TEAM_TOKEN from the card
 
+# tar both zarr directories into one submission
+tar -czf submission.tar.gz -C data ecmwf_forecast.zarr ecmwf_features.zarr
+
 set -a; source .env; set +a
 curl -X POST "$BW_ENDPOINT_URL/exercise-1/submit" \
   -H "Authorization: Bearer $BW_TEAM_TOKEN" \
-  -F "forecast=@data/ecmwf_forecast.parquet" \
-  -F "features=@data/ecmwf_features.parquet"
+  -F "submission=@submission.tar.gz"
 ```
 
 You get JSON back:
@@ -109,12 +117,12 @@ You get JSON back:
 ```jsonc
 {
   "passed": false,
-  "passed_count": 23,
-  "total": 27,
+  "passed_count": 28,
+  "total": 32,
   "submission_id": "ab12cd34ef567890",
   "submitted_at": "2026-05-13T08:30:00+00:00",
   "results": [
-    {"name": "raw.schema_columns",      "passed": true,  "hint": ""},
+    {"name": "raw.data_vars",     "passed": true,  "hint": ""},
     {"name": "features.t2m_ecmwf_z_unit_std", "passed": false,
      "hint": "t2m_ecmwf_z std isn't ≈ 1 — z-score divides by std, not min-max or N"},
     ...
@@ -139,14 +147,15 @@ recorded.
 ├── .env.example          ← copy to .env and paste your BW_TEAM_TOKEN
 ├── tests/                ← empty — you write the tests
 │   └── .gitkeep
-├── data/                 ← empty; you write the parquets here
+├── data/                 ← empty; you write the zarr stores here
 ├── .claude/              ← permissions config (you can extend this)
 └── .gitignore
 ```
 
-You will need to add at least one Python dependency for GRIB2 decoding.
-GRIB2 needs a native library (eccodes) backing the Python bindings;
-your agent has to deal with that.
+You will need to add at least two Python dependencies: one for GRIB2
+decoding (eccodes is a native library; cfgrib is the usual Python
+wrapper) and one for writing zarr stores (xarray + zarr). Your agent
+has to figure out the install dance.
 
 ## Rules
 
