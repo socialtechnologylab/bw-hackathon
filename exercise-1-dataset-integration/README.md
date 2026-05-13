@@ -1,16 +1,17 @@
 # Exercise 1 — Dataset integration
 
-Your agent has to fetch a real public weather-forecast dataset, decode an
-obscure binary format, and emit a clean, validated `parquet`. There is
-no API SDK that hands you a DataFrame — you (your agent) have to do the
-plumbing yourself.
+Your agent has to fetch a real public weather-forecast dataset, decode
+an obscure binary format, reshape it into a clean parquet, and **prep
+it for a prediction model** — resampled to the model's cadence and
+z-score normalised.
 
 You pass when `uv run pytest` is green.
 
-## The contract
+## What you produce
 
-Produce `data/ecmwf_forecast.parquet` with **exactly** these columns, in
-this order, with these dtypes:
+Two parquets, both under `data/`:
+
+### 1. `data/ecmwf_forecast.parquet` — the **raw** spatial-mean series
 
 | column | dtype | meaning |
 |---|---|---|
@@ -18,11 +19,25 @@ this order, with these dtypes:
 | `t2m_ecmwf_c` | `Float64` | 2-metre air temperature, **Celsius**, Belgian spatial mean |
 | `wind10m_ecmwf_ms` | `Float64` | 10-metre wind speed `sqrt(u² + v²)`, **m/s**, Belgian spatial mean |
 
-- **56 rows** total
+- **56 rows** (7 days × 8 three-hourly steps)
 - Sorted ascending by `valid_time`
-- No nulls anywhere
-- Belgian bounding box for the spatial mean: latitude `49.5..51.5`,
-  longitude `2.5..6.5`
+- No nulls
+- Belgian bbox for the spatial mean: lat `49.5..51.5`, lon `2.5..6.5`
+
+### 2. `data/ecmwf_features.parquet` — the **model-ready** features
+
+| column | dtype | meaning |
+|---|---|---|
+| `valid_time` | `Utf8` (string) | ISO-8601 UTC, hourly |
+| `t2m_ecmwf_z` | `Float64` | z-score normalised temperature |
+| `wind10m_ecmwf_z` | `Float64` | z-score normalised wind speed |
+
+- **166 rows** — derived from the raw parquet by:
+  1. Resampling from 3-hourly to **hourly** by linear interpolation
+     (`2025-03-01T00:00 .. 2025-03-07T21:00` inclusive)
+  2. Z-score normalising each numeric column: `(x − mean) / std`
+- Per-column `mean ≈ 0` and `std ≈ 1`
+- Sorted ascending, no nulls, exactly hourly cadence
 
 ## The data
 
@@ -54,8 +69,8 @@ has `valid_time = 2025-03-01T03:00:00+00:00`.
 ├── README.md             ← this file
 ├── pyproject.toml        ← uv-managed; ships with polars + pytest only
 ├── tests/
-│   └── test_output.py    ← the validator
-├── data/                 ← empty; you write the parquet here
+│   └── test_output.py    ← the validator (25 tests)
+├── data/                 ← empty; you write both parquets here
 └── .gitignore
 ```
 
@@ -70,14 +85,25 @@ uv sync
 uv run pytest -v
 ```
 
-Red until the parquet exists. Green once the schema, row count, range
-checks, and spot-checks all pass. The spot-checks have ±0.5 °C and
-±1.0 m/s tolerance, so honest spatial-averaging differences are fine.
+Red until both parquets exist with the right shape.
+
+11 tests cover the raw parquet (schema, count, sort, nulls, envelope,
+sample-row spot-checks ±0.5 °C / ±1.0 m/s).
+
+14 tests cover the features parquet (schema, count, sort, nulls, hourly
+cadence, per-column zero mean to float precision, per-column unit std
+within 1%, sample-row spot-checks ±0.15).
+
+The std tolerance accommodates both `ddof=1` (polars / numpy
+`ddof=1`) and `ddof=0` (sklearn `StandardScaler`) conventions.
 
 ## Rules
 
 - Use the tarball above. Other GRIB sources (the ECMWF data portal, the
   AWS S3 mirror) throttle when 30 teams pull at once — don't go there.
+- Use **linear interpolation** when resampling 3-hourly → hourly.
+  Other methods (cubic, spline) shift the sample rows enough to bust
+  the tolerance.
 - Do not modify the test file. Modify the producer code to match the
   contract, never the other way around.
 - Your agent should be doing the work. You're building the harness
