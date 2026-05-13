@@ -1,34 +1,52 @@
 # Exercise 2 — Autoresearch hackathon
 
-Three minutes from a clean directory to running:
+You're forecasting three Belgian electricity series — how much solar
+will be produced tomorrow, how much wind in two hours, how much demand
+the country will draw — and your job is **not** to tune the model by
+hand. Your job is to build a harness around a Claude agent so it can
+tune, hypothesise, and submit faster than the next team's harness.
+
+Each task ships its own self-contained `tasks/<task-id>/eval.py`:
+train a model, predict, POST to the live scoring endpoint, get back a
+real MAE. The leaderboard ranks per task by lowest MAE. The harness
+you build — slash commands, hooks, helpers, refined briefs, subagents
+— is what's being graded.
+
+Three minutes from clean directory to first submission:
 
 ```bash
 uv sync
-cp .env.example .env       # paste BW_TEAM_ID + BW_TEAM_TOKEN from the card you were handed
+cp .env.example .env       # paste BW_TEAM_ID + BW_TEAM_TOKEN from your card
 uv run python scripts/download_data.py
 claude
 > /iterate solar-1d-ahead
 ```
 
-## What this is
-
-An autoresearch hackathon. You're not optimising a model directly — you're
-building the harness around an agent that optimises models for you, then
-sending it loose on forecasting tasks. The harness you build *is* the
-artefact being graded.
-
 ## The three tasks
 
-| Task ID | What | Unit | Lead time |
-|---|---|---|---|
-| `solar-1d-ahead` | Belgium solar generation | MWh | 24 h |
-| `wind-2h-ahead` | Belgium wind generation (onshore + offshore) | MWh | 2 h |
-| `demand-1d-ahead-test` | Belgium total electricity demand | MWh | 24 h |
+| Task ID | What | Lead time |
+|---|---|---|
+| `solar-1d-ahead` | Belgian solar generation | 24 h |
+| `wind-2h-ahead` | Belgian wind generation (onshore + offshore) | 2 h |
+| `demand-1d-ahead-test` | Belgian total electricity demand | 24 h |
 
-Each task posts a separate score. The leaderboard ranks teams per-task
-by their best score of the day on that task. `demand-1d-ahead-test`
-is locked until the trainer reveals it (you'll see `reveal_at` in
-`GET /tasks`).
+`demand-1d-ahead-test` is the **late-reveal** task — it stays locked
+until the trainer opens it (the leaderboard for it is empty until
+then, and `/score` returns HTTP 423 with the unlock time). Spend the
+morning on solar and wind.
+
+## Where to find the data contract
+
+Don't trust this README to be authoritative for column names, dtypes,
+or units. The endpoint is. Fetch a task's full data contract from:
+
+```bash
+curl https://bw.stl.dev/tasks/solar-1d-ahead/schema | jq
+```
+
+That tells you the target column, cadence, train/test windows, every
+feature column with its dtype and unit, and the upstream data sources.
+Have your agent read it before iterating.
 
 ## Layout
 
@@ -44,7 +62,7 @@ is locked until the trainer reveals it (you'll see `reveal_at` in
 └── tasks/
     ├── solar-1d-ahead/
     │   ├── eval.py            # self-contained script — your edit surface
-    │   ├── program.md         # the contract for this task
+    │   ├── program.md         # the loop contract for this task
     │   └── data/              # X_train, y_train, X_test, README.md
     ├── wind-2h-ahead/
     │   ├── eval.py
@@ -62,10 +80,11 @@ is locked until the trainer reveals it (you'll see `reveal_at` in
 cd tasks/solar-1d-ahead && uv run python eval.py
 ```
 
-…trains a model on the task's parquets, posts predictions to the scoring
-endpoint, prints the MAE plus a breakdown by hour of day. Each run is a
-submission; your team's `best_so_far` on a task is the lowest MAE
-across all your submissions today. **Lower MAE = better.**
+…trains a model on the task's parquets, posts predictions to the
+scoring endpoint, prints the MAE plus a breakdown by hour of day.
+Each run is a real submission. Your team's `best_so_far` on a task
+is the lowest MAE across all your submissions today. **Lower MAE =
+better.**
 
 From inside `claude`:
 
@@ -81,14 +100,14 @@ becomes the per-task experiment journal.
 
 ## Task switching
 
-Switching tasks is free. Each task's submissions are independent on
-the endpoint, and each task has its own `eval.py` + `program.md` +
-`data/`. Stay inside your task's directory while iterating so changes
-don't bleed across tasks.
+Switching tasks is free. Each task has its own `eval.py`,
+`program.md`, and `data/`. Submissions accumulate per team per task
+on the leaderboard; the locked demand task accepts no submissions
+until reveal.
 
 ## What you may build
 
-Skills, slash commands, hooks, subagents, helpers, refined `program.md`s,
+Skills, slash commands, hooks, subagents, helpers, refined briefs,
 analysis scripts — anything that makes the loop run faster or smarter.
 The starting `.claude/` ships almost empty on purpose.
 
@@ -97,3 +116,13 @@ The starting `.claude/` ships almost empty on purpose.
 - `tasks/<id>/data/*.parquet` — the data.
 - `.env` — your team credentials.
 - Other tasks' `eval.py` files. One task at a time.
+
+## Endpoints reference
+
+| Endpoint | What |
+|---|---|
+| `GET /healthz` | liveness check |
+| `GET /tasks` | the three task ids with their metric and reveal-time status |
+| `GET /tasks/{task_id}/schema` | full data contract (columns, dtypes, units, windows) |
+| `POST /score` | submit predictions (your `eval.py` does this) |
+| `GET /leaderboard?task_id=…` | ranked teams for a task, ascending by MAE |
