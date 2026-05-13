@@ -59,8 +59,8 @@ ds = xr.open_zarr("data/ecmwf_forecast.zarr")
 
 [ECMWF Open Data](https://www.ecmwf.int/en/forecasts/datasets/open-data)
 publishes the IFS HRES global forecast model as GRIB2. The slice you
-need is pre-bundled in a release tarball so 30 teams can pull it in
-parallel without rate-limit drama:
+need is pre-bundled in a release tarball — the upstream endpoint
+throttles, so pull from here instead:
 
 > **URL**: `https://github.com/socialtechnologylab/bw-hackathon/releases/download/ecmwf-data-v1/ecmwf-grib2-belgium-2025-03-01-to-07.tar.gz`
 > **SHA-256**: `6ce4a05be9301cc0bf0af3a286c57c40f5e21e735c8c6d8006f765c25d8e7d5e`
@@ -159,9 +159,8 @@ has to figure out the install dance.
 
 ## Rules
 
-- Use the tarball above. Other GRIB sources (the ECMWF data portal,
-  the AWS S3 mirror) throttle when 30 teams pull at once — don't go
-  there.
+- Use the tarball above. The upstream ECMWF endpoints throttle; pull
+  from the release.
 - Use **linear interpolation** when resampling 3-hourly → hourly.
 - Don't try to reverse-engineer the validator from its hint messages.
   Test against the contract; let the endpoint be the binding sign-off.
