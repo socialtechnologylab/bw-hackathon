@@ -1,14 +1,21 @@
 # Exercise 1 — Dataset integration
 
-Your agent has to fetch a real public weather-forecast dataset, decode
-an obscure binary format, reshape it into a clean parquet, prep a
-second model-ready parquet, and prove correctness by submitting both
-files to a remote validator.
+You want to use ECMWF weather forecasts as features for a forecasting
+model. Only catch: ECMWF publishes them as **GRIB2** — a binary
+scientific format that needs a native library to decode, has its own
+coordinate conventions (0–360° longitude, latitude descending, units
+in Kelvin), and was never designed to be ergonomic.
 
-**There is no local validator.** You don't `uv run pytest` against a
-file we ship you. You read the contract below, write **your own tests**
-in `tests/` to enforce it, drive them red → green (TDD), and only then
-POST to the endpoint for the binding pass/fail.
+Your agent has to pull the data, decode it, and shape it into two
+clean parquets:
+
+- a **raw** spatial-mean series (one row per forecast step), and
+- a **model-ready** version (hourly, z-score normalised, ready to drop
+  into a model's feature table).
+
+When both files pass the remote validator, you're done. The validator
+runs 27 checks against the contract below and returns per-check
+pass/fail — that's the binding sign-off.
 
 ## What you produce
 
@@ -42,12 +49,12 @@ Two parquets, both under `data/`:
 - Per-column `mean ≈ 0` and `std ≈ 1`
 - Sorted ascending, no nulls, exactly hourly cadence
 
-## The data
+## Where the data lives
 
 [ECMWF Open Data](https://www.ecmwf.int/en/forecasts/datasets/open-data)
-publishes the IFS HRES global forecast model as **GRIB2** files. The
-slice you need is pre-bundled in a release tarball so 30 teams can pull
-it in parallel without rate-limit drama:
+publishes the IFS HRES global forecast model as GRIB2. The slice you
+need is pre-bundled in a release tarball so 30 teams can pull it in
+parallel without rate-limit drama:
 
 > **URL**: `https://github.com/socialtechnologylab/bw-hackathon/releases/download/ecmwf-data-v1/ecmwf-grib2-belgium-2025-03-01-to-07.tar.gz`
 > **SHA-256**: `6ce4a05be9301cc0bf0af3a286c57c40f5e21e735c8c6d8006f765c25d8e7d5e`
@@ -65,42 +72,31 @@ per `(init_date, forecast_step)`:
 `valid_time = init_time + step_hours`. So the row for `20250301-00z-03h.grib2`
 has `valid_time = 2025-03-01T03:00:00+00:00`.
 
-## TDD posture — write your own tests
+## How to know you're done
 
-The brief above is the contract. Translate it into pytest cases under
-`tests/` **before** you write any decode/transform code. A typical
-sketch:
+Two layers:
+
+**Locally:** write your own tests. The brief above is the contract;
+translate it into pytest cases under `tests/` and drive them red →
+green as you build out the producer code. Useful test names to seed
+your thinking:
 
 - `test_raw_schema_matches_contract`
 - `test_raw_has_56_rows`
 - `test_raw_t2m_plausible_for_belgian_march`
 - `test_features_hourly_cadence`
 - `test_features_mean_is_zero_and_std_is_one`
-- ...
 
-Run them locally with `uv run pytest`. They should be red until you've
-implemented `fetch.py` / `transform.py` / whatever you decide to call
-your producer code. Drive them to green. Then — and only then — submit.
+We deliberately don't ship a validator — inferring a contract, writing
+tests for it, then implementing against those tests is the discipline
+we want you to practise.
 
-We deliberately don't ship a validator. The discipline of inferring a
-contract → writing tests → driving to green is part of what you're
-learning today.
-
-## The submission endpoint
-
-First, set up your credentials (one-time):
+**Remote:** once your local tests pass, submit both files to the
+endpoint for the binding pass/fail:
 
 ```bash
-cp .env.example .env
-# edit .env — paste BW_TEAM_TOKEN from the card you were handed
-```
+cp .env.example .env       # paste BW_TEAM_TOKEN from the card
 
-Once your local tests pass, send the two parquets to the validator
-(loading credentials from `.env` via your tool of choice — `set -a; source .env; set +a`,
-`uv run --env-file=.env`, `direnv`, or just `python-dotenv` inside a
-script):
-
-```bash
 set -a; source .env; set +a
 curl -X POST "$BW_ENDPOINT_URL/exercise-1/submit" \
   -H "Authorization: Bearer $BW_TEAM_TOKEN" \
@@ -108,7 +104,7 @@ curl -X POST "$BW_ENDPOINT_URL/exercise-1/submit" \
   -F "features=@data/ecmwf_features.parquet"
 ```
 
-The response is JSON:
+You get JSON back:
 
 ```jsonc
 {
@@ -126,15 +122,13 @@ The response is JSON:
 }
 ```
 
-Hints are deliberately terse — they tell you which category of check
-failed, never the exact reference values. If you want to know exactly
-what your output looks like, write a local test against your own
-expectations.
+Hints are deliberately terse — they tell you which check failed, never
+the exact reference values. If you want to know exactly what your
+output looks like, write a local test against your own expectations.
 
-Submissions are rate-limited per team (shared limiter with `/score` —
-about one submission every five seconds is comfortable). You can
-submit as many times as you like; the endpoint records each
-submission's pass/fail.
+Submissions are rate-limited per team (about one every five seconds is
+comfortable). Submit as many times as you like; each submission is
+recorded.
 
 ## What you start with
 
@@ -156,8 +150,9 @@ your agent has to deal with that.
 
 ## Rules
 
-- Use the tarball above. Other GRIB sources (the ECMWF data portal, the
-  AWS S3 mirror) throttle when 30 teams pull at once — don't go there.
+- Use the tarball above. Other GRIB sources (the ECMWF data portal,
+  the AWS S3 mirror) throttle when 30 teams pull at once — don't go
+  there.
 - Use **linear interpolation** when resampling 3-hourly → hourly.
 - Don't try to reverse-engineer the validator from its hint messages.
   Test against the contract; let the endpoint be the binding sign-off.
