@@ -107,36 +107,21 @@ until reveal.
 
 ## A few directions to try
 
-Stuck on what to ask your agent to try next? Some seed prompts (far
-from exhaustive — most of the fun is in what you come up with):
+Some shapes of things worth exploring — your agent will fill in the
+specifics:
 
-**Feature engineering** — usually the cheapest wins
-- Cyclical encoding of `hour` / `dow` / `month`: `sin(2π·h/24)`, `cos(2π·h/24)` (so 23 → 0 is one step, not 23).
-- Effective insolation: `ghi_fcst × (1 − cloud_cover_fcst)` — closer to what panels actually see.
-- Lag features: `t2m_fcst` shifted 3 / 6 / 24 hours back; `polars.shift` is a one-liner.
-- Forecast×calendar interactions: `hour * ghi_fcst`, `month * t2m_fcst`.
-
-**Bring in new data sources** — the schema only lists what we ship; you can add anything
-- Belgian holidays via [`python-holidays`](https://pypi.org/project/holidays/) — demand drops on bank holidays.
-- Day-ahead electricity prices via [`entsoe-py`](https://github.com/EnergieID/entsoe-py) — strong demand covariate (you'll need a free ENTSO-E token).
-- Sun elevation via [`astral`](https://astral.readthedocs.io/) — the actual solar geometry behind GHI.
-- Neighbouring countries' generation/demand via ENTSO-E — cross-border drivers.
-
-**Try a different model**
-- LightGBM hyperparam sweep: bigger `n_estimators`, smaller `learning_rate`, tune `num_leaves` / `min_data_in_leaf`.
-- Swap in `xgboost` or `catboost`. Same `.fit/.predict` interface.
-- Quantile regression on the residuals to correct per-hour bias.
-- Stack: average LightGBM + a per-hour mean baseline.
-
-**Tune the agent itself** — `.claude/` is yours to extend
-- Tighten `/iterate`: only commit on improvement, or auto-tag failures with `bad:`.
-- Add an `/ablate` slash command that drops one feature at a time and reports the MAE delta per feature.
-- Pre-`/score` hook that runs `eval.py` locally first and refuses to submit if MAE got worse.
-- Subagent for parallel hypothesis exploration on a different task.
-- Custom skill that summarises the last N commits and proposes the next direction.
-
-The starting `.claude/` ships almost empty on purpose. The harness you
-build is the artefact being graded — model tweaks alone don't win.
+- **Feature engineering.** The features we ship are forecast variables
+  + raw calendar fields. Plenty of structure they don't encode.
+- **New data sources.** The schema only lists what we hand you;
+  nothing stops you from pulling in something else that might help.
+- **Different model.** LightGBM with the default hyperparameters is the
+  baseline, not the ceiling.
+- **Calibration.** The `eval.py` already prints a per-hour breakdown —
+  patterns there tend to be actionable.
+- **Tune the agent itself.** `/iterate`, hooks, subagents, custom
+  skills — the starting `.claude/` is deliberately sparse. The harness
+  you build is the artefact being graded; model tweaks alone don't
+  win.
 
 ## What you may not edit
 
