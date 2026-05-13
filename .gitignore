@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+.pyright_cache/
+
+# Secrets
+.env
+
+# Agent-side state
+.claude/scheduled_tasks.lock
+
+# Exercise-1 produced artefact
+exercise-1-dataset-integration/data/*.parquet
+
+# Exercise-2 produced state
+exercise-2-autoresearch/tasks/*/data/*.parquet
+exercise-2-autoresearch/tasks/*/experiments/

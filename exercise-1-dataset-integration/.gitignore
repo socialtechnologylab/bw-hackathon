@@ -1,0 +1,12 @@
+# Your produced artefact — don't commit it.
+data/*.parquet
+
+# Stray downloads / caches an agent might create while wrangling GRIB.
+*.grib
+*.grib2
+*.idx
+*.index
+.cache/
+__pycache__/
+.pytest_cache/
+.venv/
