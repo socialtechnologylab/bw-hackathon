@@ -1,4 +1,4 @@
-# Program — `demand-1d-ahead`
+# Program — `demand-1d-ahead-test`
 
 ## What you are doing
 
@@ -18,16 +18,16 @@ holiday effects. The weather features matter for heating/cooling load.
 
 1. Read this file and `eval.py` (at the repo root).
 2. Form a hypothesis about what would lower the MAE on
-   **`demand-1d-ahead`** specifically (calendar features beyond
+   **`demand-1d-ahead-test`** specifically (calendar features beyond
    hour/dow/month, holiday indicators, lagged loads, residual modelling
    on temperature, …).
-3. Edit `TASK_CONFIG["demand-1d-ahead"]` in `eval.py`. Stay inside that
+3. Edit `TASK_CONFIG["demand-1d-ahead-test"]` in `eval.py`. Stay inside that
    entry — the shared submission pipeline and the other tasks' entries
    should not change unless you are deliberately applying a cross-task
    improvement.
-4. Run `uv run python eval.py demand-1d-ahead`.
+4. Run `uv run python eval.py demand-1d-ahead-test`.
 5. Read the printed MAE and the per-hour breakdown.
-6. Log a one-line lesson in `tasks/demand-1d-ahead/experiments/log.md`
+6. Log a one-line lesson in `tasks/demand-1d-ahead-test/experiments/log.md`
    (create the dir + file if missing).
 7. Goto 2.
 

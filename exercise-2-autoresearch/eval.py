@@ -65,7 +65,7 @@ TASK_CONFIG: dict[str, dict] = {
         ],
         "model_factory": lambda: lgb.LGBMRegressor(n_estimators=200, verbosity=-1),
     },
-    "demand-1d-ahead": {
+    "demand-1d-ahead-test": {
         "target": "demand_mwh",
         "features": [
             "ghi_fcst",

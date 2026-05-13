@@ -1,12 +1,12 @@
 ---
 description: Run the autoresearch loop on a task — usage `/iterate <task-id>`. Reads tasks/<task-id>/program.md, edits the TASK_CONFIG entry in eval.py, re-runs, logs lessons.
-argument-hint: <task-id>  (solar-1d-ahead | wind-2h-ahead | demand-1d-ahead)
+argument-hint: <task-id>  (solar-1d-ahead | wind-2h-ahead | demand-1d-ahead-test)
 ---
 
 You are inside an autoresearch loop on the forecasting task `$ARGUMENTS`.
 
 If `$ARGUMENTS` is empty, stop and ask which task to work on. Valid ids:
-`solar-1d-ahead`, `wind-2h-ahead`, `demand-1d-ahead`.
+`solar-1d-ahead`, `wind-2h-ahead`, `demand-1d-ahead-test`.
 
 Working directory for this loop is the **repo root**. The shared
 `eval.py` at the root drives all three tasks via a `TASK_CONFIG` dict;

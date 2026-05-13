@@ -21,16 +21,16 @@ import httpx
 
 RELEASE_URL = (
     "https://github.com/socialtechnologylab/bw-hackathon-data"
-    "/releases/download/v1.2.0/bw-hackathon-data-2026-05-13-participant.tar.gz"
+    "/releases/download/v1.3.0/bw-hackathon-data-2026-05-13-participant.tar.gz"
 )
-EXPECTED_SHA = "db68f7dc5af0c6d254231a2b56e0c06a64f3795a6d7d1a90ee44c850dd58897c"
+EXPECTED_SHA = "86ec432ae0c191882bf33c810699980c0d9c32856cca314f80106b3bd02b48b2"
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TASKS_DIR = REPO_ROOT / "tasks"
 EXPECTED_TASKS = (
     "solar-1d-ahead",
     "wind-2h-ahead",
-    "demand-1d-ahead",
+    "demand-1d-ahead-test",
 )
 
 

@@ -23,7 +23,7 @@ artefact being graded.
 |---|---|---|---|
 | `solar-1d-ahead` | Belgium solar generation | MWh | 24 h |
 | `wind-2h-ahead` | Belgium wind generation (onshore + offshore) | MWh | 2 h |
-| `demand-1d-ahead` | Belgium total electricity demand | MWh | 24 h |
+| `demand-1d-ahead-test` | Belgium total electricity demand | MWh | 24 h |
 
 Each task posts a separate score. The leaderboard ranks teams per-task
 by their best score of the day on that task.
@@ -46,7 +46,7 @@ by their best score of the day on that task.
     │   ├── program.md         # the contract for this task
     │   └── experiments/log.md # your iteration log (created on first run)
     ├── wind-2h-ahead/
-    └── demand-1d-ahead/
+    └── demand-1d-ahead-test/
 ```
 
 ## The loop
