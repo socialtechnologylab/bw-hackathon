@@ -8,8 +8,13 @@ You are inside an autoresearch loop on `$ARGUMENTS`.
 If `$ARGUMENTS` is empty, stop and ask. Valid ids: `solar-1d-ahead`,
 `wind-2h-ahead`, `demand-1d-ahead-test`.
 
-Working dir: **repo root**. The shared `eval.py` drives all three tasks
-via `TASK_CONFIG`; per-task briefs live at `tasks/<id>/program.md`.
+Working directory: `tasks/$ARGUMENTS/`. The whole experiment for this
+task lives in a single file there:
+
+    tasks/$ARGUMENTS/
+    ├── eval.py         ← your only edit surface
+    ├── program.md      ← the task brief
+    └── data/           ← parquets (don't touch)
 
 ## The loop
 
@@ -18,11 +23,16 @@ is your experiment journal. There is no separate `log.md`.
 
 1. (Once, first iteration only.) Read `tasks/$ARGUMENTS/program.md`.
 2. Form **one** concrete hypothesis. Smaller diff = better.
-3. Edit **only** the `TASK_CONFIG["$ARGUMENTS"]` entry in `eval.py`.
-4. Run `uv run python eval.py $ARGUMENTS`. Read MAE + per-hour breakdown.
+3. Edit `tasks/$ARGUMENTS/eval.py`. Go wild — it's a self-contained
+   script. Features, model, transforms, ensembles, calibration, whatever.
+4. Run it:
+
+       cd tasks/$ARGUMENTS && uv run python eval.py
+
+   Read the MAE and the per-hour breakdown.
 5. Commit immediately, regardless of whether the score improved:
 
-       git add eval.py
+       git add tasks/$ARGUMENTS/eval.py
        git commit -m "$ARGUMENTS: <terse description of the change>" \
                   -m "MAE <before> → <after>. <one-sentence lesson>"
 
@@ -38,8 +48,8 @@ Look at `karpathy/nanochat` commit log for the vibe. Specifically:
   is a perfectly good commit. Negative results are data.
 - **Batch related dead-ends** under one commit when they share a theme:
   `solar-1d-ahead: bunch of feature crosses tried, all neutral`.
-- **Put numbers in the body.** Reading `git log --oneline -p` later
-  should let you reconstruct the experiment trajectory.
+- **Put numbers in the body.** Reading `git log --oneline -p tasks/$ARGUMENTS/`
+  later should let you reconstruct the experiment trajectory.
 - **No ceremony.** Don't write "this commit adds…". Just say what
   happened: `add sin/cos(hour) encoding, MAE 333.66 → 318.52`.
 
@@ -62,7 +72,8 @@ the bad result is uninteresting, keep the commit when it's instructive.
 
 ## Don't
 
-- Edit other tasks' `TASK_CONFIG` entries.
+- Edit other tasks' `eval.py`. Each task is its own surface; stay in
+  yours.
 - Edit `tasks/<id>/data/*.parquet` or `.env`.
 - Skip the commit, even on a regression.
 
@@ -70,4 +81,5 @@ the bad result is uninteresting, keep the commit when it's instructive.
 
 `/iterate` again with a different task id. Submissions accumulate per
 team per task on the leaderboard; your best score on each task is
-preserved across the day.
+preserved across the day. `git log -- tasks/<id>/eval.py` gives you
+the per-task history at any time.

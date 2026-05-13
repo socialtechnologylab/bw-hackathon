@@ -26,7 +26,9 @@ artefact being graded.
 | `demand-1d-ahead-test` | Belgium total electricity demand | MWh | 24 h |
 
 Each task posts a separate score. The leaderboard ranks teams per-task
-by their best score of the day on that task.
+by their best score of the day on that task. `demand-1d-ahead-test`
+is locked until the trainer reveals it (you'll see `reveal_at` in
+`GET /tasks`).
 
 ## Layout
 
@@ -34,7 +36,6 @@ by their best score of the day on that task.
 .
 ├── pyproject.toml             # uv-managed deps
 ├── .env                       # your team credentials (gitignored)
-├── eval.py                    # ONE shared baseline — covers all 3 tasks
 ├── .claude/                   # the starting harness — extend it
 │   ├── settings.json          # permissions + acceptEdits
 │   └── commands/iterate.md    # /iterate <task-id> — the autoresearch loop
@@ -42,17 +43,23 @@ by their best score of the day on that task.
 │   └── download_data.py       # fetch parquets for all 3 tasks
 └── tasks/
     ├── solar-1d-ahead/
-    │   ├── data/              # X_train, y_train, X_test, README.md
+    │   ├── eval.py            # self-contained script — your edit surface
     │   ├── program.md         # the contract for this task
-    │   └── experiments/log.md # your iteration log (created on first run)
+    │   └── data/              # X_train, y_train, X_test, README.md
     ├── wind-2h-ahead/
+    │   ├── eval.py
+    │   ├── program.md
+    │   └── data/
     └── demand-1d-ahead-test/
+        ├── eval.py
+        ├── program.md
+        └── data/
 ```
 
 ## The loop
 
 ```bash
-uv run python eval.py <task-id>
+cd tasks/solar-1d-ahead && uv run python eval.py
 ```
 
 …trains a model on the task's parquets, posts predictions to the scoring
@@ -67,17 +74,17 @@ From inside `claude`:
 > /iterate wind-2h-ahead         # switch to wind anytime
 ```
 
-The agent reads `tasks/<task-id>/program.md`, edits the corresponding
-`TASK_CONFIG["<task-id>"]` entry in `eval.py`, runs it, reads the score,
-logs a one-line lesson to `tasks/<task-id>/experiments/log.md`, repeats.
+The agent reads `tasks/<task-id>/program.md`, edits
+`tasks/<task-id>/eval.py`, runs it, reads the score, and commits with
+the MAE delta in the message. `git log --oneline -- tasks/<task-id>/eval.py`
+becomes the per-task experiment journal.
 
 ## Task switching
 
-Switching tasks is free. Each task's submissions are independent on the
-endpoint, and each task has its own `program.md` + `data/` + `experiments/`.
-The shared `eval.py` keeps three independent `TASK_CONFIG[…]` entries —
-edit only the one for the task you're working on so your hypothesis
-doesn't leak across tasks.
+Switching tasks is free. Each task's submissions are independent on
+the endpoint, and each task has its own `eval.py` + `program.md` +
+`data/`. Stay inside your task's directory while iterating so changes
+don't bleed across tasks.
 
 ## What you may build
 
@@ -89,3 +96,4 @@ The starting `.claude/` ships almost empty on purpose.
 
 - `tasks/<id>/data/*.parquet` — the data.
 - `.env` — your team credentials.
+- Other tasks' `eval.py` files. One task at a time.
