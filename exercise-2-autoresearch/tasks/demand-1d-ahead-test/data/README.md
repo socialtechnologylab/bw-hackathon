@@ -1,14 +1,11 @@
-# Demand 1-day-ahead data
+# Day-ahead electricity demand (Belgium total) — data
 
-**Target:** `demand_mwh` — total Belgian electricity demand for the hour
-ending at `timestamp`, in MWh.
+**Target column:** `demand_mwh`
 
-**Cadence:** hourly, UTC. Timestamps are ISO-8601.
+**Cadence:** hourly, UTC. Timestamps are ISO-8601 with explicit `+00:00`.
 
-**Train range:** 2023-01-01 → 2025-01-01 (2 years).
-
-**Test range:** 2025-01-01 → 2026-01-01 (12 months).
-`y_test` lives on the scoring endpoint, not in this directory.
+**Train range:** 2023-01-01 → 2025-01-01
+**Test range:**  2025-01-01 → 2026-01-01 (labels live on the scoring endpoint)
 
 ## Files
 
@@ -16,27 +13,36 @@ ending at `timestamp`, in MWh.
 - `y_train.parquet` — `(timestamp, demand_mwh)`.
 - `X_test.parquet` — features for the test window. **No `y_test`.**
 
-## Feature columns (X_train.parquet, X_test.parquet)
+## Feature columns
 
 | Column | Description | Units |
 |---|---|---|
 | `timestamp` | ISO-8601 hourly timestamp, UTC | — |
-| `ghi_fcst` | Forecast global horizontal irradiance | W/m² |
-| `t2m_fcst` | Forecast 2-metre air temperature | °C |
-| `wind10m_fcst` | Forecast 10-metre wind speed | m/s |
-| `cloud_cover_fcst` | Forecast cloud cover fraction | 0–1 |
+| `ghi_fcst` | Forecast global horizontal irradiance (GFS `sdswrf`) | W/m² |
+| `t2m_fcst` | Forecast 2-metre air temperature (GFS `tmp`) | °C |
+| `wind10m_fcst` | Forecast 10-metre wind speed (GFS magnitude of u,v) | m/s |
+| `cloud_cover_fcst` | Forecast total cloud cover (GFS `tcdc` / 100) | 0–1 |
 | `hour` | Hour of day | 0–23 |
 | `dow` | Day of week | 0–6 (Mon=0) |
 | `month` | Month | 1–12 |
 
-## Notes
+## Provenance
 
-- Data sources: ENTSO-E Transparency Platform for the demand series
-  (target), NOAA GFS forecast cycles for the meteorological features.
-  Features are real numerical-weather-prediction outputs, not ground
-  truth — noisy proxies of the physical drivers.
-- Demand has strong calendar structure (hour-of-day, day-of-week,
-  holidays) on top of the weather signal. The features we ship don't
-  encode holidays — that's deliberate.
-- The relationship between features and target is not documented —
-  discover it from the training data.
+- Targets: ENTSO-E Actual Total Load, Belgium
+- Features: GFS 0.25° from the AWS public S3 mirror (`s3://noaa-gfs-bdp-pds/`),
+  init cycles 00 / 06 / 12 / 18 UTC, area-mean over Belgium bbox
+  (lat 49.5–51.5, lon 2.5–6.5).
+- Forecast alignment: latest cycle initialised ≥ 24 hours before t.
+
+## Quirks
+
+- 24 of 26304 hours dropped due to missing data (0.09%).
+- Timestamps with no aligned GFS cycle are dropped silently.
+
+## Baseline
+
+Observed baseline MAE: **384.784 MWh** from
+`LGBMRegressor(n_estimators=200, verbosity=-1)` on the listed feature
+columns. That's the number to beat. Measured 2026-05-17.
+
+Source: `bw-hackathon-data/scripts/calibrate.py`.

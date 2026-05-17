@@ -1,7 +1,7 @@
 # Exercise 2 — Autoresearch hackathon
 
 You're forecasting three Belgian electricity series — how much solar
-will be produced tomorrow, how much wind in two hours, how much demand
+will be produced tomorrow, how much wind tomorrow, how much demand
 the country will draw — and your job is **not** to tune the model by
 hand. Your job is to build a harness around a Claude agent so it can
 tune, hypothesise, and submit faster than the next team's harness.
@@ -27,7 +27,7 @@ claude
 | Task ID | What | Lead time |
 |---|---|---|
 | `solar-1d-ahead` | Belgian solar generation | 24 h |
-| `wind-2h-ahead` | Belgian wind generation (onshore + offshore) | 2 h |
+| `wind-1d-ahead` | Belgian wind generation (onshore + offshore) | 24 h |
 | `demand-1d-ahead-test` | Belgian total electricity demand | 24 h |
 
 `demand-1d-ahead-test` is the **late-reveal** task — it stays locked
@@ -64,7 +64,7 @@ Have your agent read it before iterating.
     │   ├── eval.py            # self-contained script — your edit surface
     │   ├── program.md         # the loop contract for this task
     │   └── data/              # X_train, y_train, X_test, README.md
-    ├── wind-2h-ahead/
+    ├── wind-1d-ahead/
     │   ├── eval.py
     │   ├── program.md
     │   └── data/
@@ -90,7 +90,7 @@ From inside `claude`:
 
 ```
 > /iterate solar-1d-ahead       # work on solar
-> /iterate wind-2h-ahead         # switch to wind anytime
+> /iterate wind-1d-ahead         # switch to wind anytime
 ```
 
 The agent reads `tasks/<task-id>/program.md`, edits

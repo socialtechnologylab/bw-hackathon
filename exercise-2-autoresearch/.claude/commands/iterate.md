@@ -1,12 +1,12 @@
 ---
 description: Karpathy-style autoresearch loop on a task. One hypothesis, one tiny edit, one run, one commit. Usage `/iterate <task-id>`.
-argument-hint: <task-id>  (solar-1d-ahead | wind-2h-ahead | demand-1d-ahead-test)
+argument-hint: <task-id>  (solar-1d-ahead | wind-1d-ahead | demand-1d-ahead-test)
 ---
 
 You are inside an autoresearch loop on `$ARGUMENTS`.
 
 If `$ARGUMENTS` is empty, stop and ask. Valid ids: `solar-1d-ahead`,
-`wind-2h-ahead`, `demand-1d-ahead-test`.
+`wind-1d-ahead`, `demand-1d-ahead-test`.
 
 Working directory: `tasks/$ARGUMENTS/`. The whole experiment for this
 task lives in a single file there:

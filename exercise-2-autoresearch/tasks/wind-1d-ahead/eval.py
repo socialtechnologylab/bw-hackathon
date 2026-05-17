@@ -1,10 +1,10 @@
-"""Autoresearch baseline for wind-2h-ahead.
+"""Autoresearch baseline for wind-1d-ahead.
 
 Usage (from this directory):
     uv run python eval.py
 
 Or from the repo root:
-    uv run python tasks/wind-2h-ahead/eval.py
+    uv run python tasks/wind-1d-ahead/eval.py
 
 YOU MAY EDIT this file freely — it's the entire experiment surface for
 this task. Add features, swap models, write transforms, build ensembles,
@@ -25,13 +25,13 @@ import lightgbm as lgb
 import polars as pl
 from dotenv import load_dotenv
 
-HERE = Path(__file__).resolve().parent          # tasks/wind-2h-ahead/
+HERE = Path(__file__).resolve().parent          # tasks/wind-1d-ahead/
 REPO_ROOT = HERE.parent.parent
 DATA_DIR = HERE / "data"
 
 load_dotenv(REPO_ROOT / ".env")
 
-TASK_ID = "wind-2h-ahead"
+TASK_ID = "wind-1d-ahead"
 TARGET = "wind_mwh"
 FEATURES = [
     "ghi_fcst",

@@ -1,6 +1,6 @@
-# Day-ahead solar energy (Belgium aggregate) — data
+# Day-ahead wind energy (Belgium aggregate) — data
 
-**Target column:** `solar_mwh`
+**Target column:** `wind_mwh`
 
 **Cadence:** hourly, UTC. Timestamps are ISO-8601 with explicit `+00:00`.
 
@@ -10,7 +10,7 @@
 ## Files
 
 - `X_train.parquet` — features for the training window.
-- `y_train.parquet` — `(timestamp, solar_mwh)`.
+- `y_train.parquet` — `(timestamp, wind_mwh)`.
 - `X_test.parquet` — features for the test window. **No `y_test`.**
 
 ## Feature columns
@@ -28,7 +28,7 @@
 
 ## Provenance
 
-- Targets: ENTSO-E B16 (Solar) actual generation, Belgium control area (10YBE----------2)
+- Targets: ENTSO-E B19 (Wind Onshore) + B18 (Wind Offshore) summed, Belgium
 - Features: GFS 0.25° from the AWS public S3 mirror (`s3://noaa-gfs-bdp-pds/`),
   init cycles 00 / 06 / 12 / 18 UTC, area-mean over Belgium bbox
   (lat 49.5–51.5, lon 2.5–6.5).
@@ -41,7 +41,7 @@
 
 ## Baseline
 
-Observed baseline MAE: **333.663 MWh** from
+Observed baseline MAE: **486.406 MWh** from
 `LGBMRegressor(n_estimators=200, verbosity=-1)` on the listed feature
 columns. That's the number to beat. Measured 2026-05-17.
 

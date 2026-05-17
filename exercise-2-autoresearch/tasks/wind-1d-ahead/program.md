@@ -1,4 +1,4 @@
-# Program — `wind-2h-ahead`
+# Program — `wind-1d-ahead`
 
 ## What you are doing
 
@@ -9,23 +9,23 @@ you write — is the artefact being graded.
 
 ## The task
 
-2-hour-ahead Belgium-aggregate **wind generation** (onshore + offshore
-summed) in MWh, hourly. The forecast lead time is short, so near-term
-state matters. The signal is volatile compared to solar.
+Day-ahead Belgium-aggregate **wind generation** (onshore + offshore
+summed) in MWh, hourly. At 24h lead time, persistence stops working —
+weather-forecast features have to carry the prediction.
 
 ## The loop
 
 1. Read this file and `eval.py` (at the repo root).
 2. Form a hypothesis about what would lower the MAE on
-   **`wind-2h-ahead`** specifically (autoregressive lags, gust-aware
+   **`wind-1d-ahead`** specifically (autoregressive lags, gust-aware
    features, persistence baselines, …).
-3. Edit `TASK_CONFIG["wind-2h-ahead"]` in `eval.py`. Stay inside that
+3. Edit `TASK_CONFIG["wind-1d-ahead"]` in `eval.py`. Stay inside that
    entry — the shared submission pipeline and the other tasks' entries
    should not change unless you are deliberately applying a cross-task
    improvement.
-4. Run `uv run python eval.py wind-2h-ahead`.
+4. Run `uv run python eval.py wind-1d-ahead`.
 5. Read the printed MAE and the per-hour breakdown.
-6. Log a one-line lesson in `tasks/wind-2h-ahead/experiments/log.md`
+6. Log a one-line lesson in `tasks/wind-1d-ahead/experiments/log.md`
    (create the dir + file if missing).
 7. Goto 2.
 
