@@ -54,7 +54,3 @@ permission prompts on every Bash call. `cd` first.
 - macOS or Linux (Windows users: WSL).
 - `uv` ([install](https://docs.astral.sh/uv/getting-started/installation/)).
 - `claude` CLI ([install](https://docs.anthropic.com/en/docs/claude-code/quickstart)).
-- For Exercise 1: a system-level GRIB decoder. On macOS:
-  `brew install eccodes`. On Debian/Ubuntu: `apt install libeccodes-dev`.
-  (Discovering this requirement is part of the exercise — but you'll
-  want it on disk before the morning starts.)
