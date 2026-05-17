@@ -101,14 +101,14 @@ we want you to practise.
 archive** and submit it for the binding pass/fail:
 
 ```bash
-cp .env.example .env       # paste BW_TEAM_TOKEN from the card
+cp .env.example .env       # paste BW_TEAM_ID from the card
 
 # tar both zarr directories into one submission
 tar -czf submission.tar.gz -C data ecmwf_forecast.zarr ecmwf_features.zarr
 
 set -a; source .env; set +a
 curl -X POST "$BW_ENDPOINT_URL/exercise-1/submit" \
-  -H "Authorization: Bearer $BW_TEAM_TOKEN" \
+  -F "team_id=$BW_TEAM_ID" \
   -F "submission=@submission.tar.gz"
 ```
 
@@ -144,7 +144,7 @@ recorded.
 .
 ├── README.md             ← this file
 ├── pyproject.toml        ← uv-managed; ships with polars + pytest only
-├── .env.example          ← copy to .env and paste your BW_TEAM_TOKEN
+├── .env.example          ← copy to .env and paste your BW_TEAM_ID
 ├── tests/                ← empty — you write the tests
 │   └── .gitkeep
 ├── data/                 ← empty; you write the zarr stores here

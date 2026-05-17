@@ -16,7 +16,7 @@ Three minutes from clean directory to first submission:
 
 ```bash
 uv sync
-cp .env.example .env       # paste BW_TEAM_ID + BW_TEAM_TOKEN from your card
+cp .env.example .env       # paste BW_TEAM_ID from your card
 uv run python scripts/download_data.py
 claude
 > /iterate solar-1d-ahead
@@ -53,7 +53,7 @@ Have your agent read it before iterating.
 ```
 .
 ├── pyproject.toml             # uv-managed deps
-├── .env                       # your team credentials (gitignored)
+├── .env                       # your team identifier (gitignored)
 ├── .claude/                   # the starting harness — extend it
 │   ├── settings.json          # permissions + acceptEdits
 │   └── commands/iterate.md    # /iterate <task-id> — the autoresearch loop
@@ -126,7 +126,7 @@ specifics:
 ## What you may not edit
 
 - `tasks/<id>/data/*.parquet` — the data.
-- `.env` — your team credentials.
+- `.env` — your team identifier.
 - Other tasks' `eval.py` files. One task at a time.
 
 ## Endpoints reference

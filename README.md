@@ -30,7 +30,7 @@ contains the `.claude/` folder.
 ```bash
 cd exercise-1-dataset-integration       # or exercise-2-autoresearch
 uv sync
-cp .env.example .env                    # paste BW_TEAM_TOKEN from the card
+cp .env.example .env                    # paste BW_TEAM_ID from the card
 claude
 ```
 

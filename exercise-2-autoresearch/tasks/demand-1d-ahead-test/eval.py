@@ -12,7 +12,7 @@ anything that fits the iteration budget.
 
 YOU MAY NOT EDIT:
 - data/*.parquet (the data)
-- ../../.env  (your team credentials)
+- ../../.env  (your team identifier)
 """
 
 from __future__ import annotations
@@ -61,7 +61,6 @@ def main() -> None:
 
     resp = httpx.post(
         f"{os.environ['BW_ENDPOINT_URL']}/score",
-        headers={"Authorization": f"Bearer {os.environ['BW_TEAM_TOKEN']}"},
         json={
             "task_id": TASK_ID,
             "team_id": os.environ["BW_TEAM_ID"],

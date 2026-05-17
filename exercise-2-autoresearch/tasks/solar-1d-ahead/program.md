@@ -59,7 +59,7 @@ shape, not the labels.
 ## What you may not edit
 
 - `data/*.parquet` — the dataset.
-- `.env` — your team credentials.
+- `.env` — your team identifier.
 
 ## What the data looks like
 
