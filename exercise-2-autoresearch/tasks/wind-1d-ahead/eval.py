@@ -21,9 +21,9 @@ import os
 from pathlib import Path
 
 import httpx
-import lightgbm as lgb
 import polars as pl
 from dotenv import load_dotenv
+from sklearn.linear_model import LinearRegression
 
 HERE = Path(__file__).resolve().parent          # tasks/wind-1d-ahead/
 REPO_ROOT = HERE.parent.parent
@@ -38,14 +38,11 @@ FEATURES = [
     "t2m_fcst",
     "wind10m_fcst",
     "cloud_cover_fcst",
-    "hour",
-    "dow",
-    "month",
 ]
 
 
 def make_model():
-    return lgb.LGBMRegressor(n_estimators=200, verbosity=-1)
+    return LinearRegression()
 
 
 def main() -> None:
@@ -101,13 +98,13 @@ def main() -> None:
     print("\nBy hour of day:")
     print(by_hour)
 
-    importances = sorted(
-        zip(FEATURES, model.feature_importances_, strict=True),
-        key=lambda x: -x[1],
+    coefs = sorted(
+        zip(FEATURES, model.coef_, strict=True),
+        key=lambda x: -abs(x[1]),
     )
-    print("\nTop feature importances:")
-    for name, imp in importances[:5]:
-        print(f"  {name:<24} {imp}")
+    print("\nCoefficients (by magnitude):")
+    for name, c in coefs:
+        print(f"  {name:<24} {c:+.4f}")
 
 
 if __name__ == "__main__":
