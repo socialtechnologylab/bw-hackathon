@@ -60,7 +60,7 @@ def main() -> None:
     preds = model.predict(X_test[FEATURES].to_pandas())
 
     resp = httpx.post(
-        f"{os.environ['BW_ENDPOINT_URL']}/score",
+        f"{os.environ.get('BW_ENDPOINT_URL', 'https://bw.stl.dev')}/score",
         json={
             "task_id": TASK_ID,
             "team_id": os.environ["BW_TEAM_ID"],
