@@ -4,13 +4,13 @@ You're forecasting three Belgian electricity series — how much solar
 will be produced tomorrow, how much wind tomorrow, how much demand
 the country will draw — and your job is **not** to tune the model by
 hand. Your job is to build a harness around a Claude agent so it can
-tune, hypothesise, and submit faster than the next team's harness.
+tune, hypothesise, and submit faster and better than the next team's harness.
 
 Each task ships its own self-contained `tasks/<task-id>/eval.py`:
 train a model, predict, POST to the live scoring endpoint, get back a
 real MAE. The leaderboard ranks per task by lowest MAE. The harness
-you build — slash commands, hooks, helpers, refined briefs, subagents
-— is what's being graded.
+you build, slash commands, hooks, helpers, refined briefs, access to more data, 
+is what's being graded.
 
 Three minutes from clean directory to first submission:
 
@@ -32,8 +32,7 @@ claude
 
 `demand-1d-ahead-test` is the **late-reveal** task — it stays locked
 until the trainer opens it (the leaderboard for it is empty until
-then, and `/score` returns HTTP 423 with the unlock time). Spend the
-morning on solar and wind.
+then, and `/score` returns HTTP 423 with the unlock time). Spend time optimizing on solar and wind.
 
 ## Where to find the data contract
 
