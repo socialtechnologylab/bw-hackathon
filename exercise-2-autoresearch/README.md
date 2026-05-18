@@ -1,16 +1,12 @@
 # Exercise 2 — Autoresearch hackathon
 
-You're forecasting three Belgian electricity series — how much solar
-will be produced tomorrow, how much wind tomorrow, how much demand
-the country will draw — and your job is **not** to tune the model by
-hand. Your job is to build a harness around a Claude agent so it can
-tune, hypothesise, and submit faster and better than the next team's harness.
+You're forecasting three Belgian electricity time series (solar energy generation, wind energy generation and electricity deman). Your job is **not** to tune the model by
+hand. Your job is to build a harness and task for a Claude agent so it can
+tune, hypothesise, and submit autonomously better than the next team's harness.
 
 Each task ships its own self-contained `tasks/<task-id>/eval.py`:
 train a model, predict, POST to the live scoring endpoint, get back a
-real MAE. The leaderboard ranks per task by lowest MAE. The harness
-you build, slash commands, hooks, helpers, refined briefs, access to more data, 
-is what's being graded.
+real MAE. The leaderboard ranks per task by lowest MAE.
 
 Three minutes from clean directory to first submission:
 
@@ -30,9 +26,8 @@ claude
 | `wind-1d-ahead` | Belgian wind generation (onshore + offshore) | 24 h |
 | `demand-1d-ahead-test` | Belgian total electricity demand | 24 h |
 
-`demand-1d-ahead-test` is the **late-reveal** task — it stays locked
-until the trainer opens it (the leaderboard for it is empty until
-then, and `/score` returns HTTP 423 with the unlock time). Spend time optimizing on solar and wind.
+`demand-1d-ahead-test` is the **late-reveal** task which you will be graded on. It stays locked
+until the trainer opens it, you then have half an hour to make the best predictions you can. Spend time optimizing on solar and wind to practice and experiment
 
 ## Where to find the data contract
 
@@ -45,7 +40,6 @@ curl https://bw.stl.dev/tasks/solar-1d-ahead/schema | jq
 
 That tells you the target column, cadence, train/test windows, every
 feature column with its dtype and unit, and the upstream data sources.
-Have your agent read it before iterating.
 
 ## Layout
 
@@ -57,7 +51,7 @@ Have your agent read it before iterating.
 │   ├── settings.json          # permissions + acceptEdits
 │   └── commands/iterate.md    # /iterate <task-id> — the autoresearch loop
 ├── scripts/
-│   └── download_data.py       # fetch parquets for all 3 tasks
+│   └── download_data.py       # fetch data for all 3 tasks
 └── tasks/
     ├── solar-1d-ahead/
     │   ├── eval.py            # self-contained script — your edit surface
